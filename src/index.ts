@@ -120,7 +120,7 @@ app.get('/wallets/:ids', async (req, res) => {
     const addresses = req?.params?.ids?.toLowerCase()?.split(',');
     if (!addresses?.length) throw new Error('Please provide a list of addresses to get wallets');
 
-    const query = `select * from ${Config.dataset}.${Config.walletsTableName} where lower(address) in @addresses`;
+    const query = `select * from ${Config.dataset}.${Config.walletsTableName} where lower(address) in unnest(@addresses)`;
   
     const options = {
       query: query,
