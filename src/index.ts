@@ -162,7 +162,6 @@ app.get('/pools/:ids', async (req, res) => {
     if (!addresses?.length) throw new Error('Please provide a list of addresses to get pools');
 
     const query = `select * from ${Config.dataset}.${Config.poolsTableName} where lower(address) in unnest(@addresses)`;
-    console.log('query', query);
 
     const options = {
       query: query,
