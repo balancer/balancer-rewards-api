@@ -6,4 +6,4 @@ export const dataset = 'balancer_rewards';
 
 // Bigquery Table names - shouold be within the `dataset` above
 export const poolsTableName = 'pools';
-export const walletsTableName = 'wallets';
+export const liquidityProviderTableName = 'wallets';
