@@ -94,7 +94,7 @@ app.get('/liquidity-provider/:id', async (req, res) => {
     const requestedAt = new Date();
   
     const [rows] = await bq.query(options);
-    if (!rows?.length) throw new Error('Error, no wallets were found');
+    if (!rows?.length) throw new Error('Error, no liquidity providers were found');
 
     const row = rows[0];
   
@@ -123,7 +123,7 @@ app.get('/liquidity-provider/:id', async (req, res) => {
 app.post('/liquidity-providers', async (req, res) => {
   try {
     const addresses = req?.body?.addresses;
-    if (!addresses?.length) throw new Error('Please provide a list of addresses to get wallets');
+    if (!addresses?.length) throw new Error('Please provide a list of addresses to get liquidity providers');
 
     const query = `select * from ${Config.dataset}.${Config.liquidityProviderTableName} where lower(address) in unnest(@addresses)`;
   
@@ -135,10 +135,10 @@ app.post('/liquidity-providers', async (req, res) => {
     const requestedAt = new Date();
 
     const [rows] = await bq.query(options);
-    if (!rows?.length) throw new Error('No wallets were found');
+    if (!rows?.length) throw new Error('No liquidity providers were found');
   
     const results = rows.map((row) => {
-      if (!row?.address) throw new Error('there was an error getting wallets');
+      if (!row?.address) throw new Error('there was an error getting liquidity providers');
 
       return {
         snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
