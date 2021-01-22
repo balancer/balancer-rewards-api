@@ -21,7 +21,7 @@ main.use(bodyParser.json());
 main.use(bodyParser.urlencoded({ extended: false }));
 
 // expose app for firebase cloud func
-export const rewardsApi = functions.https.onRequest(main);
+export const liquidity_mining_estimates = functions.https.onRequest(main);
 
 // establish a bigquery connection
 const bq = new BigQuery({ projectId: Config.projectId });
@@ -60,11 +60,14 @@ app.get('/pool/:id', async (req, res) => {
   
     const response =  {
       success: true,
-      current_timestamp: requestedAt,
-      snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
-      address: row.address,
-      reward_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
-      velocity: row.velocity,
+      result: {
+        current_timestamp: requestedAt,
+        snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
+        address: row.address,
+        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
+        velocity: row?.velocity,
+        week: row?.week,
+      },
     };
   
     return res.status(200).send(response);
@@ -73,7 +76,7 @@ app.get('/pool/:id', async (req, res) => {
   }
 });
 
-app.get('/wallet/:id', async (req, res) => {
+app.get('/liquidity-provider/:id', async (req, res) => {
   try {
     const address = req?.params?.id?.toLowerCase();
   
@@ -81,7 +84,7 @@ app.get('/wallet/:id', async (req, res) => {
       throw new Error('must specify an address');
     }
   
-    const query = `select * from ${Config.dataset}.${Config.walletsTableName} where lower(address) = @address`;
+    const query = `select * from ${Config.dataset}.${Config.liquidityProviderTableName} where lower(address) = @address`;
   
     const options = {
       query: query,
@@ -91,7 +94,7 @@ app.get('/wallet/:id', async (req, res) => {
     const requestedAt = new Date();
   
     const [rows] = await bq.query(options);
-    if (!rows?.length) throw new Error('Error, no wallets were found');
+    if (!rows?.length) throw new Error('Error, no liquidity providers were found');
 
     const row = rows[0];
   
@@ -101,11 +104,14 @@ app.get('/wallet/:id', async (req, res) => {
   
     const response =  {
       success: true,
-      current_timestamp: requestedAt,
-      snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
-      address: row.address,
-      reward_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
-      velocity: row.velocity,
+      result: {
+        current_timestamp: requestedAt,
+        snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
+        address: row.address,
+        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
+        velocity: row?.velocity,
+        week: row?.week,
+      },
     };
   
     return res.status(200).send(response);
@@ -114,13 +120,12 @@ app.get('/wallet/:id', async (req, res) => {
   }
 });
 
-// NOTE: GET requests to Cloud Functions must have an EMPTY body, must pass in params in the URL itself
-app.get('/wallets/:ids', async (req, res) => {
+app.post('/liquidity-providers', async (req, res) => {
   try {
-    const addresses = req?.params?.ids?.toLowerCase()?.split(',');
-    if (!addresses?.length) throw new Error('Please provide a list of addresses to get wallets');
+    const addresses = req?.body?.addresses;
+    if (!addresses?.length) throw new Error('Please provide a list of addresses to get liquidity providers');
 
-    const query = `select * from ${Config.dataset}.${Config.walletsTableName} where lower(address) in unnest(@addresses)`;
+    const query = `select * from ${Config.dataset}.${Config.liquidityProviderTableName} where lower(address) in unnest(@addresses)`;
   
     const options = {
       query: query,
@@ -130,24 +135,26 @@ app.get('/wallets/:ids', async (req, res) => {
     const requestedAt = new Date();
 
     const [rows] = await bq.query(options);
-    if (!rows?.length) throw new Error('No wallets were found');
+    if (!rows?.length) throw new Error('No liquidity providers were found');
   
     const results = rows.map((row) => {
-      if (!row?.address) throw new Error('there was an error getting wallets');
+      if (!row?.address) throw new Error('there was an error getting liquidity providers');
 
       return {
         snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
         address: row.address,
-        reward_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
+        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
         velocity: row.velocity,
+        week: row?.week,
       }
     });
-
   
     const response =  {
       success: true,
-      current_timestamp: requestedAt,
-      wallets: results,
+      result: {
+        current_timestamp: requestedAt,
+        'liquidity-providers': results,
+      },
     };
   
     return res.status(200).send(response);
@@ -156,9 +163,9 @@ app.get('/wallets/:ids', async (req, res) => {
   }
 });
 
-app.get('/pools/:ids', async (req, res) => {
+app.post('/pools', async (req, res) => {
   try {
-    const addresses = req?.params?.ids?.toLowerCase()?.split(',');
+    const addresses = req?.body?.addresses;
     if (!addresses?.length) throw new Error('Please provide a list of addresses to get pools');
 
     const query = `select * from ${Config.dataset}.${Config.poolsTableName} where lower(address) in unnest(@addresses)`;
@@ -179,15 +186,18 @@ app.get('/pools/:ids', async (req, res) => {
       return {
         snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
         address: row.address,
-        reward_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
+        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
         velocity: row.velocity,
+        week: row?.week,
       }
     });
   
     const response =  {
       success: true,
-      current_timestamp: requestedAt,
-      pools: results,
+      result: {
+        current_timestamp: requestedAt,
+        pools: results,
+      },
     };
   
     return res.status(200).send(response);
