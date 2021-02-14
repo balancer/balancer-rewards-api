@@ -4,6 +4,7 @@
     "lint": "eslint \"src/**/*\"",
     "build": "tsc",
     "serve": "npm run build && firebase emulators:start --only functions",
+    "express": "node ./lib/index.js",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
@@ -19,6 +20,7 @@
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "firebase": "^8.2.4",
     "firebase-admin": "^9.2.0",
     "firebase-functions": "^3.11.0",
     "moment": "^2.29.1"

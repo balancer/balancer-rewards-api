@@ -206,3 +206,7 @@ app.post('/pools', async (req, res) => {
   }
 });
 
+const port = process.env.PORT || 3000
+main.listen(port, () => {
+  console.log(`BAL rewards estimation API started on port ${port}`)
+})
