@@ -17,7 +17,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
 const main = express();
-main.use('liquidity-mining/v1', app);
+main.use('/liquidity-mining/v1', app);
 main.use(cors());
 main.use(bodyParser.json());
 main.use(bodyParser.urlencoded({ extended: false }));
