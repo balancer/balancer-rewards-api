@@ -12,6 +12,8 @@ import { getRealTimeEstimate } from './helpers';
  *  Set up express app
  */
 const app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
 const main = express();
@@ -52,21 +54,23 @@ app.get('/pool/:id', async (req, res) => {
     const [rows] = await bq.query(options);
     if (!rows?.length) throw new Error('Error, no pools were found');
 
-    const row = rows[0];
-  
-    if (!row?.address) {
-      throw new Error(`no address found for ${req?.params?.id}`);
-    }
+    const results = rows.map((row) => {
+      if (!row?.address) throw new Error('there was an error getting pools');
+
+      return {
+        snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
+        address: row.address,
+        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
+        velocity: row.velocity,
+        week: row?.week,
+      }
+    });
   
     const response =  {
       success: true,
       result: {
         current_timestamp: requestedAt,
-        snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
-        address: row.address,
-        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
-        velocity: row?.velocity,
-        week: row?.week,
+        pools: results,
       },
     };
   
@@ -96,21 +100,23 @@ app.get('/liquidity-provider/:id', async (req, res) => {
     const [rows] = await bq.query(options);
     if (!rows?.length) throw new Error('Error, no liquidity providers were found');
 
-    const row = rows[0];
-  
-    if (!row?.address) {
-      throw new Error(`no rewards found for address ${req?.params?.id}`);
-    }
+    const results = rows.map((row) => {
+      if (!row?.address) throw new Error('there was an error getting pools');
+
+      return {
+        snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
+        address: row.address,
+        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
+        velocity: row.velocity,
+        week: row?.week,
+      }
+    });
   
     const response =  {
       success: true,
       result: {
         current_timestamp: requestedAt,
-        snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
-        address: row.address,
-        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
-        velocity: row?.velocity,
-        week: row?.week,
+        'liquidity-providers': results,
       },
     };
   
@@ -122,8 +128,10 @@ app.get('/liquidity-provider/:id', async (req, res) => {
 
 app.post('/liquidity-providers', async (req, res) => {
   try {
-    const addresses = req?.body?.addresses;
-    if (!addresses?.length) throw new Error('Please provide a list of addresses to get liquidity providers');
+    const _addresses = req?.body?.addresses;
+    if (!_addresses?.length) throw new Error('Please provide a list of addresses to get liquidity providers');
+
+    const addresses = _addresses.map((a: any) => a.toLowerCase());
 
     const query = `select * from ${Config.dataset}.${Config.liquidityProviderTableName} where lower(address) in unnest(@addresses)`;
   
@@ -165,8 +173,10 @@ app.post('/liquidity-providers', async (req, res) => {
 
 app.post('/pools', async (req, res) => {
   try {
-    const addresses = req?.body?.addresses;
-    if (!addresses?.length) throw new Error('Please provide a list of addresses to get pools');
+    const _addresses = req?.body?.addresses;
+    if (!_addresses?.length) throw new Error('Please provide a list of addresses to get liquidity providers');
+
+    const addresses = _addresses.map((a: any) => a.toLowerCase());
 
     const query = `select * from ${Config.dataset}.${Config.poolsTableName} where lower(address) in unnest(@addresses)`;
 
