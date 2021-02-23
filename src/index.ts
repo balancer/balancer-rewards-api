@@ -34,6 +34,37 @@ const bq = new BigQuery({ projectId: Config.projectId });
  *  *****************************
  */
 
+app.get('/gas/:id', async (req, res) => {
+  try {
+    const address = req?.params?.id?.toLowerCase();
+  
+    const query = `select sum(earned) as earned from ${Config.dataset}.${Config.gasTableName}`;
+
+    if (address) {
+      query += ` where lower(address) = @address`;
+    }
+    
+    const options = {
+      query: query,
+      params: { address },
+    };
+  
+    const [rows] = await bq.query(options);
+    if (!rows?.length) throw new Error('Error, no results');
+
+    const current_estimate = rows[0].earned
+
+    const response =  {
+      success: true,
+      result: current_estimate
+    };
+  
+    return res.status(200).send(response);
+  } catch (e) {
+    return res.status(400).send({ success: false, error: e?.message });
+  }
+});
+
 app.get('/pool/:id', async (req, res) => {
   try {
     const address = req?.params?.id?.toLowerCase();
