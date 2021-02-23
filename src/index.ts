@@ -38,7 +38,7 @@ app.get('/gas/:id', async (req, res) => {
   try {
     const address = req?.params?.id?.toLowerCase();
   
-    const query = `select sum(earned) as earned from ${Config.dataset}.${Config.gasTableName}`;
+    var query = `select sum(earned) as earned from ${Config.dataset}.${Config.gasTableName}`;
 
     if (address) {
       query += ` where lower(address) = @address`;
