@@ -71,8 +71,7 @@ app.get('/gas', async (req, res) => {
     var query = `select coalesce(sum(earned),0) as earned from ${Config.dataset}.${Config.gasTableName}`;
 
     const options = {
-      query: query,
-      params: { address },
+      query: query
     };
   
     const [rows] = await bq.query(options);
