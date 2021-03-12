@@ -42,7 +42,7 @@ app.get('/gas/:id', async (req, res) => {
       throw new Error('must specify an address');
     }
   
-    const query = `select coalesce(sum(earned),0) as earned from ${Config.dataset}.${Config.gasTableName} where lower(address) = @address`;
+    const query = `select coalesce(sum(bal_reimbursement),0) as earned from ${Config.dataset}.${Config.gasTableName} where lower(address) = @address`;
     
     const options = {
       query: query,
@@ -68,7 +68,7 @@ app.get('/gas/:id', async (req, res) => {
 app.get('/gas', async (req, res) => {
   try {
   
-    var query = `select coalesce(sum(earned),0) as earned from ${Config.dataset}.${Config.gasTableName}`;
+    var query = `select coalesce(sum(bal_reimbursement),0) as earned from ${Config.dataset}.${Config.gasTableName}`;
 
     const options = {
       query: query
