@@ -34,6 +34,62 @@ const bq = new BigQuery({ projectId: Config.projectId });
  *  *****************************
  */
 
+app.get('/gas/:id', async (req, res) => {
+  try {
+    const address = req?.params?.id?.toLowerCase();
+  
+    if (!address) {
+      throw new Error('must specify an address');
+    }
+  
+    const query = `select coalesce(sum(bal_reimbursement),0) as earned from ${Config.dataset}.${Config.gasTableName} where lower(address) = @address`;
+    
+    const options = {
+      query: query,
+      params: { address },
+    };
+  
+    const [rows] = await bq.query(options);
+    if (!rows?.length) throw new Error('Error, no results');
+
+    const current_estimate = rows[0].earned
+
+    const response =  {
+      success: true,
+      result: current_estimate
+    };
+  
+    return res.status(200).send(response);
+  } catch (e) {
+    return res.status(400).send({ success: false, error: e?.message });
+  }
+});
+
+app.get('/gas', async (req, res) => {
+  try {
+  
+    var query = `select coalesce(sum(bal_reimbursement),0) as earned from ${Config.dataset}.${Config.gasTableName}`;
+
+    const options = {
+      query: query
+    };
+  
+    const [rows] = await bq.query(options);
+    if (!rows?.length) throw new Error('Error, no results');
+
+    const current_estimate = rows[0].earned
+
+    const response =  {
+      success: true,
+      result: current_estimate
+    };
+  
+    return res.status(200).send(response);
+  } catch (e) {
+    return res.status(400).send({ success: false, error: e?.message });
+  }
+});
+
 app.get('/pool/:id', async (req, res) => {
   try {
     const address = req?.params?.id?.toLowerCase();
