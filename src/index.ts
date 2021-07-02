@@ -182,6 +182,54 @@ app.get('/liquidity-provider/:id', async (req, res) => {
   }
 });
 
+app.get('/liquidity-provider-multitoken/:id', async (req, res) => {
+  try {
+    const address = req?.params?.id?.toLowerCase();
+  
+    if (!address) {
+      throw new Error('must specify an address');
+    }
+  
+    const query = `select * from ${Config.dataset}.${Config.multitokenLiquidityProviderTableName} where lower(address) = @address`;
+  
+    const options = {
+      query: query,
+      params: { address },
+    };
+
+    const requestedAt = new Date();
+  
+    const [rows] = await bq.query(options);
+    if (!rows?.length) throw new Error('Error, no liquidity providers were found');
+
+    const results = rows.map((row) => {
+      if (!row?.address) throw new Error('there was an error getting pools');
+
+      return {
+        snapshot_timestamp: moment(row.timestamp * 1000).toDate(),
+        address: row.address,
+        token_address: row.token_address,
+        chain_id: row.chain_id,
+        current_estimate: `${getRealTimeEstimate(row.earned, row.timestamp * 1000, row.velocity)}`,
+        velocity: row.velocity,
+        week: row?.week,
+      }
+    });
+  
+    const response =  {
+      success: true,
+      result: {
+        current_timestamp: requestedAt,
+        'liquidity-providers': results,
+      },
+    };
+  
+    return res.status(200).send(response);
+  } catch (e) {
+    return res.status(400).send({ success: false, error: e?.message });
+  }
+});
+
 app.post('/liquidity-providers', async (req, res) => {
   try {
     const _addresses = req?.body?.addresses;
