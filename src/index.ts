@@ -245,7 +245,7 @@ app.get('/liquidity-provider-multitoken-status', async (req, res) => {
     if (!rows?.length) throw new Error('Error, no results');
     const alert = rows[0].alert;
     const response =  {
-      success: alert
+      success: !alert
     };
   
     return res.status(200).send(response);
