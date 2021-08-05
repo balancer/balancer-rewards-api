@@ -230,6 +230,30 @@ app.get('/liquidity-provider-multitoken/:id', async (req, res) => {
   }
 });
 
+app.get('/liquidity-provider-multitoken-status', async (req, res) => {
+  try {
+    const query = `select TIMESTAMP_DIFF(
+      CURRENT_TIMESTAMP(),
+      TIMESTAMP_SECONDS(max(timestamp)),
+      MINUTE) > 80 AS alert from ${Config.dataset}.${Config.multitokenLiquidityProviderTableName}`;
+  
+    const options = {
+      query: query
+    };
+
+    const [rows] = await bq.query(options);
+    if (!rows?.length) throw new Error('Error, no results');
+    const alert = rows[0].alert;
+    const response =  {
+      success: alert
+    };
+  
+    return res.status(200).send(response);
+  } catch (e) {
+    return res.status(400).send({ success: false, error: e?.message });
+  }
+});
+
 app.post('/liquidity-providers', async (req, res) => {
   try {
     const _addresses = req?.body?.addresses;
