@@ -235,7 +235,7 @@ app.get('/liquidity-provider-multitoken-status', async (req, res) => {
     const query = `select TIMESTAMP_DIFF(
       CURRENT_TIMESTAMP(),
       TIMESTAMP_SECONDS(max(timestamp)),
-      MINUTE) > 80 AS alert from ${Config.dataset}.${Config.multitokenLiquidityProviderTableName}`;
+      MINUTE) > 100 AS alert from ${Config.dataset}.${Config.multitokenLiquidityProviderTableName}`;
   
     const options = {
       query: query
